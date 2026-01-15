@@ -1,6 +1,22 @@
 // js/main.js
-db.ref("testConnection").set({
-  message: "Firebase is working!"
+window.addEventListener("load", () => {
+  const savedRoomId = localStorage.getItem("roomId");
+  const savedPlayerId = localStorage.getItem("playerId");
+  const savedPlayerName = localStorage.getItem("playerName");
+  const savedIsHost = localStorage.getItem("isHost") === "1";
+
+  if (savedRoomId && savedPlayerId) {
+    currentRoomId = savedRoomId;
+    currentPlayerId = savedPlayerId;
+    currentPlayerName = savedPlayerName;
+    isHost = savedIsHost;
+
+    subscribeToRoom(savedRoomId);
+    roomCodeDisplay.textContent = savedRoomId;
+    playerNameDisplay.textContent = savedPlayerName;
+
+    showScreen("screen-waiting-room");
+  }
 });
 
 let currentRoomId = null;
@@ -74,6 +90,11 @@ btnCreateRoom.addEventListener("click", async () => {
   playerNameDisplay.textContent = currentPlayerName;
   showScreen("screen-waiting-room");
 });
+
+localStorage.setItem("roomId", currentRoomId);
+localStorage.setItem("playerId", currentPlayerId);
+localStorage.setItem("playerName", currentPlayerName);
+localStorage.setItem("isHost", isHost ? "1" : "0");
 
 // Join room
 btnJoinRoom.addEventListener("click", async () => {
