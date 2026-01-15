@@ -206,6 +206,33 @@ function handleRoomState(room) {
   if (state === "results") {
     setupResultsPhase(room);
   }
+} // If it's night and all alive players with abilities have acted, resolve night
+if (room.state === "night") {
+  const actions = room.actions || {};
+  const alivePlayers = Object.values(room.players).filter(p => p.alive);
+
+  // Count how many players *should* act
+  const requiredActors = alivePlayers.filter(p => {
+    const role = getRoleById(p.roleId);
+    return role.nightAbility !== null;
+  });
+
+  if (Object.keys(actions).length === requiredActors.length) {
+    if (isHost) {
+      resolveNight(room);
+    }
+  }
+}
+// If it's day and all alive players have voted, resolve voting
+if (room.state === "day") {
+  const votes = room.votes || {};
+  const alivePlayers = Object.values(room.players).filter(p => p.alive);
+
+  if (Object.keys(votes).length === alivePlayers.length) {
+    if (isHost) {
+      resolveDay(room);
+    }
+  }
 }
 
 // After seeing role, continue to night
@@ -310,3 +337,101 @@ btnNextPhase.addEventListener("click", async () => {
     await roomRef.update({ state: "night" });
   }
 });
+
+async function resolveNight(room) {
+  const actions = room.actions || {};
+  const players = room.players;
+
+  let killTarget = null;
+  let investigateResult = null;
+
+  // Process each action
+  Object.values(actions).forEach(action => {
+    if (action.type === "kill") {
+      killTarget = action.targetId;
+    }
+    if (action.type === "investigate") {
+      const targetRole = players[action.targetId].roleId;
+      const role = getRoleById(targetRole);
+      investigateResult = `${players[action.targetId].name} is on team ${role.team}`;
+    }
+  });
+
+  const updates = {};
+
+  // Apply kill
+  if (killTarget) {
+    updates[`players/${killTarget}/alive`] = false;
+  }
+
+  // Store results text
+  let results = "";
+  if (killTarget) {
+    results += `${players[killTarget].name} was killed during the night.\n`;
+  } else {
+    results += `No one died last night.\n`;
+  }
+
+  if (investigateResult) {
+    results += `The Seer learned: ${investigateResult}`;
+  }
+
+  updates["resultsText"] = results;
+
+  // Clear actions
+  updates["actions"] = null;
+
+  // Move to results phase
+  updates["state"] = "results";
+
+  await db.ref(`rooms/${currentRoomId}`).update(updates);
+}
+async function resolveDay(room) {
+  const votes = room.votes || {};
+  const players = room.players;
+
+  // Count votes
+  const tally = {};
+  Object.values(votes).forEach(v => {
+    if (!tally[v.targetId]) tally[v.targetId] = 0;
+    tally[v.targetId]++;
+  });
+
+  // Determine who has the most votes
+  let maxVotes = 0;
+  let eliminatedPlayerId = null;
+
+  Object.keys(tally).forEach(pid => {
+    if (tally[pid] > maxVotes) {
+  maxVotes = tally[pid];
+  eliminatedPlayerId = pid;
+} else if (tally[pid] === maxVotes) {
+  eliminatedPlayerId = null; // tie = no elimination
+}
+  });
+
+  const updates = {};
+
+  // Apply elimination
+  if (eliminatedPlayerId) {
+    updates[`players/${eliminatedPlayerId}/alive`] = false;
+  }
+
+  // Build results text
+  let results = "";
+  if (eliminatedPlayerId) {
+    results += `${players[eliminatedPlayerId].name} was voted out.\n`;
+  } else {
+    results += `No one was eliminated.\n`;
+  }
+
+  updates["resultsText"] = results;
+
+  // Clear votes
+  updates["votes"] = null;
+
+  // Move to results phase
+  updates["state"] = "results";
+
+  await db.ref(`rooms/${currentRoomId}`).update(updates);
+}
