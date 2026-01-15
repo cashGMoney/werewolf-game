@@ -136,6 +136,37 @@ function subscribeToRoom(roomCode) {
 
     updatePlayerList(room.players || {});
     handleRoomState(room);
+
+    // NOW it's safe to reference `room`
+
+    // Night auto-resolution
+    if (room.state === "night") {
+      const actions = room.actions || {};
+      const alivePlayers = Object.values(room.players).filter(p => p.alive);
+
+      const requiredActors = alivePlayers.filter(p => {
+        const role = getRoleById(p.roleId);
+        return role.nightAbility !== null;
+      });
+
+      if (Object.keys(actions).length === requiredActors.length) {
+        if (isHost) {
+          resolveNight(room);
+        }
+      }
+    }
+
+    // Day auto-resolution
+    if (room.state === "day") {
+      const votes = room.votes || {};
+      const alivePlayers = Object.values(room.players).filter(p => p.alive);
+
+      if (Object.keys(votes).length === alivePlayers.length) {
+        if (isHost) {
+          resolveDay(room);
+        }
+      }
+    }
   });
 }
 
@@ -207,33 +238,6 @@ function handleRoomState(room) {
     setupResultsPhase(room);
   }
 } // If it's night and all alive players with abilities have acted, resolve night
-if (room.state === "night") {
-  const actions = room.actions || {};
-  const alivePlayers = Object.values(room.players).filter(p => p.alive);
-
-  // Count how many players *should* act
-  const requiredActors = alivePlayers.filter(p => {
-    const role = getRoleById(p.roleId);
-    return role.nightAbility !== null;
-  });
-
-  if (Object.keys(actions).length === requiredActors.length) {
-    if (isHost) {
-      resolveNight(room);
-    }
-  }
-}
-// If it's day and all alive players have voted, resolve voting
-if (room.state === "day") {
-  const votes = room.votes || {};
-  const alivePlayers = Object.values(room.players).filter(p => p.alive);
-
-  if (Object.keys(votes).length === alivePlayers.length) {
-    if (isHost) {
-      resolveDay(room);
-    }
-  }
-}
 
 // After seeing role, continue to night
 btnContinueFromRole.addEventListener("click", async () => {
