@@ -1,4 +1,7 @@
 // js/main.js
+db.ref("testConnection").set({
+  message: "Firebase is working!"
+});
 
 let currentRoomId = null;
 let currentPlayerId = null;
