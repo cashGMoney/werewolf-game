@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Werewolf Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main id="app">
+    <section id="screen-lobby" class="screen active">
+      <h1>Werewolf</h1>
+
+      <div class="card">
+        <h2>Create Game</h2>
+        <input id="host-name" placeholder="Your name" />
+        <button id="btn-create-room">Create Room</button>
+      </div>
+
+      <div class="card">
+        <h2>Join Game</h2>
+        <input id="join-room-code" placeholder="Room code" />
+        <input id="join-name" placeholder="Your name" />
+        <button id="btn-join-room">Join Room</button>
+      </div>
+    </section>
+
+    <section id="screen-waiting-room" class="screen">
+      <h2>Room: <span id="room-code-display"></span></h2>
+      <p>You are: <span id="player-name-display"></span></p>
+
+      <h3>Players</h3>
+      <ul id="player-list"></ul>
+
+      <button id="btn-start-game" class="host-only">Start Game</button>
+    </section>
+
+    <section id="screen-role" class="screen">
+      <h2>Your Role</h2>
+      <p id="role-name"></p>
+      <p id="role-description"></p>
+      <button id="btn-continue-from-role">Continue</button>
+    </section>
+
+    <section id="screen-night" class="screen">
+      <h2>Night Phase</h2>
+      <p id="night-instructions"></p>
+      <div id="night-action-container"></div>
+    </section>
+
+    <section id="screen-day" class="screen">
+      <h2>Day Phase</h2>
+      <p>Discuss who might be a werewolf.</p>
+      <h3>Vote to eliminate</h3>
+      <div id="vote-container"></div>
+    </section>
+
+    <section id="screen-results" class="screen">
+      <h2>Results</h2>
+      <div id="results-text"></div>
+      <button id="btn-next-phase">Next</button>
+    </section>
+  </main>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/roles.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
